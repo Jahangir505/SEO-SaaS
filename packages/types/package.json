@@ -1,0 +1,20 @@
+{
+  "name": "@seoflow/types",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "echo 'no tests for @seoflow/types'",
+    "build": "echo 'consumed as TypeScript source'"
+  },
+  "devDependencies": {
+    "@seoflow/config": "workspace:*",
+    "eslint": "^9.39.0",
+    "typescript": "~6.0.3"
+  }
+}

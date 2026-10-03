@@ -1,0 +1,4 @@
+{
+  "extends": "@seoflow/config/tsconfig/library.json",
+  "include": ["src"]
+}

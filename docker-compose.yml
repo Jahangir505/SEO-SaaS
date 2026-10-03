@@ -1,0 +1,94 @@
+# SEOFlow local stack.
+#   Infra only (for `pnpm dev`):  docker compose up -d postgres redis
+#   Full stack:                    docker compose up -d --build
+# All ports are bound to 127.0.0.1 so nothing is exposed to the network.
+
+name: seoflow
+
+x-db-url: &database-url postgresql://${POSTGRES_USER:-seoflow}:${POSTGRES_PASSWORD:-seoflow}@postgres:5432/${POSTGRES_DB:-seoflow}?schema=public
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-seoflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-seoflow}
+      POSTGRES_DB: ${POSTGRES_DB:-seoflow}
+    ports:
+      - '127.0.0.1:${POSTGRES_HOST_PORT:-5433}:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes']
+    ports:
+      - '127.0.0.1:${REDIS_HOST_PORT:-6381}:6379'
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # One-shot job: applies pending Prisma migrations, then exits.
+  migrate:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+      target: migrate
+    environment:
+      DATABASE_URL: *database-url
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: 'no'
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+      target: runtime
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      LOG_LEVEL: ${API_LOG_LEVEL:-info}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      DATABASE_URL: *database-url
+      REDIS_URL: redis://redis:6379
+    ports:
+      - '127.0.0.1:${API_HOST_PORT:-4000}:4000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+      target: runtime
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:${WEB_HOST_PORT:-3000}:3000'
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+  redis-data:

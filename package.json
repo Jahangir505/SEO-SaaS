@@ -1,0 +1,30 @@
+{
+  "name": "seoflow",
+  "private": true,
+  "description": "SEOFlow — Audit. Optimize. Track. Grow.",
+  "packageManager": "pnpm@10.11.0",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter @seoflow/api --filter @seoflow/web dev",
+    "dev:api": "pnpm --filter @seoflow/api dev",
+    "dev:web": "pnpm --filter @seoflow/web dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:generate": "pnpm --filter @seoflow/api db:generate",
+    "db:migrate": "pnpm --filter @seoflow/api db:migrate",
+    "db:studio": "pnpm --filter @seoflow/api db:studio",
+    "docker:infra": "docker compose up -d postgres redis",
+    "docker:up": "docker compose up -d --build",
+    "docker:down": "docker compose down"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.9",
+    "prettier-plugin-tailwindcss": "^0.8.1"
+  }
+}

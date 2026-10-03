@@ -1,0 +1,15 @@
+// SEOFlow database schema.
+//
+// Phase 1 only wires up Prisma + PostgreSQL. Domain models (User, Organization,
+// OrganizationMember, Project, Website, ...) are introduced from Phase 2 onwards.
+// Multi-tenancy rule: every tenant-owned table carries an indexed `organizationId`.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
